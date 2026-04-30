@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LearnSkills</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          paper: '#F4F1EA',
+          ink:   '#1F1B16',
+        },
+        fontFamily: {
+          sans:  ['Inter', 'system-ui', 'sans-serif'],
+          serif: ['Fraunces', 'Georgia', 'serif'],
+          mono:  ['ui-monospace', 'SFMono-Regular', 'monospace'],
+        }
+      }
+    }
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .serif-display { font-family: 'Fraunces', Georgia, serif; font-feature-settings: 'ss01', 'ss02'; }
+  .prose-msg { max-width: 100%; line-height: 1.65; }
+  .prose-msg h1, .prose-msg h2, .prose-msg h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; margin-top: 1.2em; margin-bottom: 0.4em; }
+  .prose-msg h1 { font-size: 1.5rem; } .prose-msg h2 { font-size: 1.3rem; } .prose-msg h3 { font-size: 1.1rem; }
+  .prose-msg p { margin-bottom: 0.75em; }
+  .prose-msg ul, .prose-msg ol { margin: 0.5em 0 0.75em 1.5em; }
+  .prose-msg ul { list-style: disc; } .prose-msg ol { list-style: decimal; }
+  .prose-msg li { margin-bottom: 0.25em; }
+  .prose-msg code { font-family: 'ui-monospace', 'SFMono-Regular', monospace; font-size: 0.9em; padding: 0.1em 0.35em; background: rgba(127,127,127,0.15); border-radius: 0.25em; }
+  .prose-msg pre { margin: 0.75em 0; padding: 0.9em 1em; border-radius: 0.5em; overflow-x: auto; background: #282c34; }
+  .prose-msg pre code { background: transparent; padding: 0; font-size: 0.85em; color: #abb2bf; }
+  .prose-msg blockquote { border-left: 3px solid currentColor; opacity: 0.75; padding-left: 1em; margin: 0.75em 0; font-style: italic; }
+  .prose-msg a { color: #b5612e; text-decoration: underline; text-underline-offset: 2px; }
+  .dark .prose-msg a { color: #e9a472; }
+  .prose-msg hr { border: 0; border-top: 1px solid currentColor; opacity: 0.2; margin: 1.5em 0; }
+  .prose-msg table { border-collapse: collapse; margin: 0.75em 0; }
+  .prose-msg th, .prose-msg td { border: 1px solid currentColor; padding: 0.4em 0.7em; }
+  .thinking-summary { cursor: pointer; user-select: none; opacity: 0.65; font-size: 0.85em; }
+  .thinking-summary:hover { opacity: 1; }
+  details[open] > .thinking-summary { opacity: 0.9; }
+  .thinking-body { padding: 0.5em 0.75em; margin: 0.4em 0; border-left: 2px solid currentColor; opacity: 0.7; font-size: 0.9em; white-space: pre-wrap; }
+  .tool-chip { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.25em 0.7em; border-radius: 9999px; font-size: 0.82em; font-weight: 500; background: rgba(181, 97, 46, 0.12); color: #b5612e; border: 1px solid rgba(181, 97, 46, 0.25); margin: 0.25em 0; }
+  .dark .tool-chip { background: rgba(233, 164, 114, 0.12); color: #e9a472; border-color: rgba(233, 164, 114, 0.25); }
+  .blink-caret::after { content: '▍'; animation: blink 1s steps(2, start) infinite; opacity: 0.6; margin-left: 1px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .scroll-thin::-webkit-scrollbar { width: 6px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: rgba(127,127,127,0.3); border-radius: 3px; }
+  .copy-btn { position: absolute; top: 0.4em; right: 0.4em; opacity: 0; transition: opacity 0.15s; padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 0.75em; background: rgba(255,255,255,0.1); color: #abb2bf; }
+  pre:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body class="bg-paper text-ink dark:bg-slate-900 dark:text-slate-100 h-screen overflow-hidden antialiased">
+
+<div class="flex h-full">
+  <!-- ============== Sidebar ============== -->
+  <aside id="sidebar" class="w-72 border-r border-black/10 dark:border-white/10 flex flex-col bg-paper/60 dark:bg-slate-900/60 backdrop-blur shrink-0">
+    <div class="p-4 border-b border-black/10 dark:border-white/10">
+      <h1 class="serif-display text-2xl tracking-tight">LearnSkills</h1>
+      <p class="text-xs opacity-60 mt-1">Anthropic Skills demo · Opus 4.7</p>
+    </div>
+
+    <button id="newChatBtn" class="m-3 px-3 py-2 rounded-lg border border-black/15 dark:border-white/15 text-sm hover:bg-black/5 dark:hover:bg-white/5 transition flex items-center justify-center gap-2">
+      <span>＋</span><span>New chat</span>
+    </button>
+
+    <div class="flex-1 overflow-y-auto scroll-thin px-2 pb-3">
+      <div id="conversationList" class="space-y-0.5"></div>
+    </div>
+
+    <div class="border-t border-black/10 dark:border-white/10 p-3">
+      <div class="text-xs uppercase tracking-wider opacity-60 mb-2 px-1">Available skills</div>
+      <div id="skillsList" class="space-y-1"></div>
+    </div>
+
+    <div class="border-t border-black/10 dark:border-white/10 px-3 py-2 flex items-center justify-between text-xs">
+      <button id="themeToggle" class="opacity-60 hover:opacity-100 transition">
+        <span class="dark:hidden">🌙 Dark</span>
+        <span class="hidden dark:inline">☀ Light</span>
+      </button>
+      <span class="opacity-50">claude-opus-4-7</span>
+    </div>
+  </aside>
+
+  <!-- ============== Main column ============== -->
+  <main class="flex-1 flex flex-col min-w-0">
+    <header class="border-b border-black/10 dark:border-white/10 px-6 py-3 flex items-center justify-between">
+      <h2 id="convTitle" class="serif-display text-lg">New chat</h2>
+      <button id="deleteConvBtn" class="hidden text-xs opacity-50 hover:opacity-100 hover:text-red-500 transition">Delete</button>
+    </header>
+
+    <div id="messageList" class="flex-1 overflow-y-auto scroll-thin px-6 py-6 space-y-6"></div>
+
+    <!-- Cache footer (the learning visualization) -->
+    <div id="usageFooter" class="hidden border-t border-black/10 dark:border-white/10 px-6 py-1.5 text-xs font-mono opacity-60">
+      <span id="usageStats"></span>
+    </div>
+
+    <!-- Input area -->
+    <div class="border-t border-black/10 dark:border-white/10 p-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="relative">
+          <textarea id="input" rows="1" placeholder="Send a message…  (Cmd/Ctrl+Enter to send)"
+            class="w-full px-4 py-3 pr-14 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-slate-800/70 text-ink dark:text-slate-100 placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-amber-700/40 dark:focus:ring-amber-500/40 resize-none scroll-thin max-h-60"></textarea>
+          <button id="sendBtn" class="absolute right-2 bottom-2 px-3 py-1.5 rounded-lg bg-ink text-paper dark:bg-slate-100 dark:text-slate-900 text-sm font-medium hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition">Send</button>
+          <button id="stopBtn" class="hidden absolute right-2 bottom-2 px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition">■ Stop</button>
+        </div>
+        <div class="text-xs opacity-40 mt-1.5 text-center">
+          Try: "Review this Python: <code>def divide(a, b): return a/b</code>" · "Compute the mean of [1,2,3,4,5]" · "Design a landing page for a coffee shop"
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+// =================== State ===================
+const state = {
+  conversations: [],
+  currentId: null,
+  messages: [],          // canonical view of the conversation, mirrors server
+  skills: [],
+  abortController: null,
+  isStreaming: false,
+};
+
+// =================== Utilities ===================
+function $(sel) { return document.querySelector(sel); }
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderMarkdown(text) {
+  const html = marked.parse(text || '', { breaks: true, gfm: true });
+  const safe = DOMPurify.sanitize(html);
+  // Run highlight.js on the result
+  const wrap = document.createElement('div');
+  wrap.innerHTML = safe;
+  wrap.querySelectorAll('pre code').forEach(b => { try { hljs.highlightElement(b); } catch {} });
+  // Add copy buttons to pre blocks
+  wrap.querySelectorAll('pre').forEach(pre => {
+    pre.style.position = 'relative';
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const code = pre.querySelector('code')?.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1200);
+      });
+    };
+    pre.appendChild(btn);
+  });
+  return wrap.innerHTML;
+}
+
+function toolChipLabel(name) {
+  switch (name) {
+    case 'read_skill':     return { icon: '📖', text: 'Reading skill' };
+    case 'web_search':     return { icon: '🔍', text: 'Searching the web' };
+    case 'code_execution': return { icon: '⚙️', text: 'Running code' };
+    default:               return { icon: '🔧', text: name };
+  }
+}
+
+// =================== API client ===================
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (!res.ok) {
+    let detail = ''; try { detail = (await res.json()).detail; } catch {}
+    throw new Error(`${res.status} ${res.statusText}${detail ? ': ' + detail : ''}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// =================== Conversation management ===================
+async function loadConversationList() {
+  state.conversations = await api('/api/conversations');
+  renderConversationList();
+}
+
+function renderConversationList() {
+  const list = $('#conversationList');
+  list.innerHTML = '';
+  for (const c of state.conversations) {
+    const btn = document.createElement('button');
+    const active = c.id === state.currentId;
+    btn.className = `w-full text-left px-3 py-2 rounded-lg text-sm truncate transition ${active ? 'bg-black/8 dark:bg-white/10 font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-80'}`;
+    btn.textContent = c.title || 'New chat';
+    btn.title = c.title;
+    btn.onclick = () => openConversation(c.id);
+    list.appendChild(btn);
+  }
+}
+
+async function openConversation(id) {
+  state.currentId = id;
+  const conv = await api(`/api/conversations/${id}`);
+  state.messages = conv.messages || [];
+  $('#convTitle').textContent = conv.title;
+  $('#deleteConvBtn').classList.remove('hidden');
+  history.replaceState(null, '', `?c=${id}`);
+  renderConversationList();
+  renderAllMessages();
+  // Restore the latest cumulative usage from the most recent assistant turn
+  const lastAsst = [...state.messages].reverse().find(m => m.role === 'assistant' && m.usage);
+  updateUsageFooter(lastAsst?.usage || null);
+}
+
+async function newConversation() {
+  const conv = await api('/api/conversations', { method: 'POST' });
+  state.conversations = [conv, ...state.conversations];
+  await openConversation(conv.id);
+}
+
+async function deleteConversation() {
+  if (!state.currentId) return;
+  if (!confirm('Delete this conversation?')) return;
+  await api(`/api/conversations/${state.currentId}`, { method: 'DELETE' });
+  state.currentId = null;
+  state.messages = [];
+  $('#deleteConvBtn').classList.add('hidden');
+  $('#convTitle').textContent = 'New chat';
+  history.replaceState(null, '', '/');
+  await loadConversationList();
+  renderAllMessages();
+  updateUsageFooter(null);
+}
+
+// =================== Message rendering ===================
+function renderAllMessages() {
+  const ml = $('#messageList');
+  ml.innerHTML = '';
+  if (state.messages.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'text-center opacity-40 mt-20 serif-display text-2xl';
+    empty.textContent = 'How can I help?';
+    ml.appendChild(empty);
+    return;
+  }
+  for (const m of state.messages) renderMessageInto(ml, m);
+  ml.scrollTop = ml.scrollHeight;
+}
+
+function renderMessageInto(parent, m) {
+  if (m.role === 'user') {
+    parent.appendChild(userBubble(textOfContent(m.content)));
+  } else {
+    parent.appendChild(assistantTurn(m.content));
+  }
+}
+
+function textOfContent(content) {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+}
+
+function userBubble(text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'flex justify-end';
+  const inner = document.createElement('div');
+  inner.className = 'max-w-2xl px-4 py-2.5 rounded-2xl rounded-br-md bg-ink text-paper dark:bg-slate-100 dark:text-slate-900 whitespace-pre-wrap break-words';
+  inner.textContent = text;
+  wrap.appendChild(inner);
+  return wrap;
+}
+
+function assistantTurn(content) {
+  const wrap = document.createElement('div');
+  wrap.className = 'flex justify-start';
+  const inner = document.createElement('div');
+  inner.className = 'prose-msg w-full max-w-3xl';
+  if (Array.isArray(content)) {
+    for (const block of content) inner.appendChild(renderBlock(block));
+  } else if (typeof content === 'string') {
+    const div = document.createElement('div');
+    div.innerHTML = renderMarkdown(content);
+    inner.appendChild(div);
+  }
+  wrap.appendChild(inner);
+  return wrap;
+}
+
+function renderBlock(block) {
+  if (block.type === 'text') {
+    const div = document.createElement('div');
+    div.innerHTML = renderMarkdown(block.text || '');
+    return div;
+  }
+  if (block.type === 'thinking') {
+    const det = document.createElement('details');
+    det.className = 'my-2';
+    const sum = document.createElement('summary');
+    sum.className = 'thinking-summary';
+    sum.textContent = '🧠 Thinking…';
+    det.appendChild(sum);
+    const body = document.createElement('div');
+    body.className = 'thinking-body';
+    body.textContent = block.thinking || '';
+    det.appendChild(body);
+    return det;
+  }
+  if (block.type === 'tool_use') {
+    const chip = document.createElement('div');
+    chip.className = 'tool-chip';
+    const lbl = toolChipLabel(block.name);
+    let detail = '';
+    if (block.name === 'read_skill') detail = `: ${block.input?.name || '?'}`;
+    else if (block.name === 'web_search' && block.input?.query) detail = `: "${block.input.query}"`;
+    chip.innerHTML = `<span>${lbl.icon}</span><span>${escapeHtml(lbl.text)}${escapeHtml(detail)}</span>`;
+    return chip;
+  }
+  if (block.type === 'tool_result' || block.type?.endsWith('_tool_result')) {
+    // Server-side tool results (web_search, code_execution) come back as
+    // tool-specific block types; render compactly.
+    const wrap = document.createElement('div');
+    wrap.className = 'text-xs opacity-60 italic my-1';
+    wrap.textContent = '↳ tool result received';
+    return wrap;
+  }
+  if (block.type === 'server_tool_use') {
+    const chip = document.createElement('div');
+    chip.className = 'tool-chip';
+    const lbl = toolChipLabel(block.name);
+    chip.innerHTML = `<span>${lbl.icon}</span><span>${escapeHtml(lbl.text)}</span>`;
+    return chip;
+  }
+  // Unknown block type — render compactly
+  const wrap = document.createElement('div');
+  wrap.className = 'text-xs opacity-40 italic';
+  wrap.textContent = `[${block.type}]`;
+  return wrap;
+}
+
+// =================== Streaming a turn ===================
+function updateUsageFooter(usage) {
+  if (!usage) { $('#usageFooter').classList.add('hidden'); return; }
+  const total = usage.input_tokens + usage.cache_creation_input_tokens + usage.cache_read_input_tokens;
+  const pct = total > 0 ? (usage.cache_read_input_tokens / total * 100) : 0;
+  $('#usageStats').textContent =
+    `input ${usage.input_tokens.toLocaleString()} · output ${usage.output_tokens.toLocaleString()} · cache_create ${usage.cache_creation_input_tokens.toLocaleString()} · cache_read ${usage.cache_read_input_tokens.toLocaleString()} · ${pct.toFixed(0)}% cache hit`;
+  $('#usageFooter').classList.remove('hidden');
+}
+
+async function sendMessage() {
+  const ta = $('#input');
+  const text = ta.value.trim();
+  if (!text || state.isStreaming) return;
+
+  if (!state.currentId) await newConversation();
+
+  ta.value = '';
+  ta.style.height = 'auto';
+
+  // Optimistically render the user bubble
+  const ml = $('#messageList');
+  // Clear empty state if present
+  if (state.messages.length === 0) ml.innerHTML = '';
+  state.messages.push({ role: 'user', content: text });
+  ml.appendChild(userBubble(text));
+
+  // Build a live assistant container we'll mutate as events arrive
+  const turnWrap = document.createElement('div');
+  turnWrap.className = 'flex justify-start';
+  const turnInner = document.createElement('div');
+  turnInner.className = 'prose-msg w-full max-w-3xl';
+  turnWrap.appendChild(turnInner);
+  ml.appendChild(turnWrap);
+  ml.scrollTop = ml.scrollHeight;
+
+  // Tracking the in-progress text/thinking deltas
+  let currentTextEl = null;
+  let currentTextBuffer = '';
+  let currentThinkingEl = null;
+  let currentThinkingBuffer = '';
+
+  function flushText() {
+    if (currentTextEl) currentTextEl.innerHTML = renderMarkdown(currentTextBuffer);
+  }
+  function newTextBlock() {
+    flushText();
+    currentTextEl = document.createElement('div');
+    currentTextEl.classList.add('blink-caret');
+    currentTextBuffer = '';
+    turnInner.appendChild(currentTextEl);
+  }
+  function newThinkingBlock() {
+    if (currentTextEl) currentTextEl.classList.remove('blink-caret');
+    currentTextEl = null;
+    const det = document.createElement('details');
+    det.className = 'my-2';
+    det.open = true;
+    const sum = document.createElement('summary');
+    sum.className = 'thinking-summary';
+    sum.textContent = '🧠 Thinking…';
+    det.appendChild(sum);
+    currentThinkingEl = document.createElement('div');
+    currentThinkingEl.className = 'thinking-body';
+    currentThinkingBuffer = '';
+    det.appendChild(currentThinkingEl);
+    turnInner.appendChild(det);
+  }
+
+  toggleStreamingUI(true);
+  state.abortController = new AbortController();
+
+  try {
+    const res = await fetch(`/api/conversations/${state.currentId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text }),
+      signal: state.abortController.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Stream failed');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      // SSE frame separator
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        const frame = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const ev = parseSSEFrame(frame);
+        if (!ev) continue;
+        await handleEvent(ev);
+      }
+    }
+
+    function parseSSEFrame(frame) {
+      const lines = frame.split('\n');
+      let event = 'message', data = '';
+      for (const line of lines) {
+        if (line.startsWith(':')) continue; // comment / heartbeat
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) data += line.slice(5).trimStart();
+      }
+      if (!data) return null;
+      try { return { event, data: JSON.parse(data) }; } catch { return { event, data }; }
+    }
+
+    async function handleEvent({ event, data }) {
+      if (event === 'text_delta') {
+        if (!currentTextEl) newTextBlock();
+        currentTextBuffer += data.text || '';
+        flushText();
+        ml.scrollTop = ml.scrollHeight;
+      } else if (event === 'thinking_delta') {
+        if (!currentThinkingEl) newThinkingBlock();
+        currentThinkingBuffer += data.thinking || '';
+        currentThinkingEl.textContent = currentThinkingBuffer;
+        ml.scrollTop = ml.scrollHeight;
+      } else if (event === 'tool_use_complete') {
+        // Render the chip when we have the parsed input
+        if (currentTextEl) currentTextEl.classList.remove('blink-caret');
+        currentTextEl = null; currentThinkingEl = null;
+        const chip = renderBlock({ type: 'tool_use', name: data.name, input: data.input });
+        turnInner.appendChild(chip);
+        ml.scrollTop = ml.scrollHeight;
+      } else if (event === 'tool_result') {
+        const wrap = document.createElement('div');
+        wrap.className = 'text-xs opacity-60 italic my-1';
+        const preview = (data.content || '').slice(0, 80).replace(/\s+/g, ' ');
+        wrap.textContent = data.is_error ? `↳ tool error: ${preview}…` : '↳ skill loaded';
+        turnInner.appendChild(wrap);
+      } else if (event === 'iteration_end') {
+        // New iteration starting; force fresh blocks if model continues with text
+        if (currentTextEl) currentTextEl.classList.remove('blink-caret');
+        currentTextEl = null;
+        currentThinkingEl = null;
+      } else if (event === 'usage') {
+        updateUsageFooter(data.usage);
+      } else if (event === 'turn_end') {
+        if (currentTextEl) currentTextEl.classList.remove('blink-caret');
+        // Replace the live in-progress turn with the final canonical content
+        // returned by the server (preserves all blocks in order).
+        if (data.final_content && Array.isArray(data.final_content)) {
+          turnInner.innerHTML = '';
+          for (const block of data.final_content) turnInner.appendChild(renderBlock(block));
+          state.messages.push({ role: 'assistant', content: data.final_content, usage: data.usage });
+        }
+      } else if (event === 'error') {
+        const err = document.createElement('div');
+        err.className = 'text-sm text-red-500 italic mt-2';
+        err.textContent = `⚠ ${data.code}: ${data.message}`;
+        turnInner.appendChild(err);
+      } else if (event === 'done') {
+        // Final terminator — refresh sidebar (in case title changed)
+        await loadConversationList();
+      }
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      const note = document.createElement('div');
+      note.className = 'text-xs opacity-60 italic mt-2';
+      note.textContent = '— stopped by user —';
+      turnInner.appendChild(note);
+    } else {
+      const err = document.createElement('div');
+      err.className = 'text-sm text-red-500 italic mt-2';
+      err.textContent = `⚠ ${e.message}`;
+      turnInner.appendChild(err);
+    }
+  } finally {
+    toggleStreamingUI(false);
+    state.abortController = null;
+  }
+}
+
+function toggleStreamingUI(on) {
+  state.isStreaming = on;
+  $('#sendBtn').classList.toggle('hidden', on);
+  $('#stopBtn').classList.toggle('hidden', !on);
+  $('#input').disabled = on;
+}
+
+function stopStreaming() {
+  if (state.abortController) state.abortController.abort();
+}
+
+// =================== Skills sidebar ===================
+async function loadSkillsList() {
+  state.skills = await api('/api/skills');
+  const el = $('#skillsList');
+  el.innerHTML = '';
+  for (const s of state.skills) {
+    const item = document.createElement('div');
+    item.className = 'text-xs px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-default';
+    item.innerHTML = `<div class="font-medium">${escapeHtml(s.name)}</div><div class="opacity-60 line-clamp-2 mt-0.5">${escapeHtml(s.description)}</div>`;
+    el.appendChild(item);
+  }
+}
+
+// =================== Theme ===================
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = saved ? saved === 'dark' : prefersDark;
+  document.documentElement.classList.toggle('dark', dark);
+}
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+}
+
+// =================== Wire-up ===================
+function autoGrow(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 240) + 'px';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
+  $('#themeToggle').onclick = toggleTheme;
+  $('#newChatBtn').onclick = newConversation;
+  $('#deleteConvBtn').onclick = deleteConversation;
+  $('#sendBtn').onclick = sendMessage;
+  $('#stopBtn').onclick = stopStreaming;
+
+  const ta = $('#input');
+  ta.addEventListener('input', () => autoGrow(ta));
+  ta.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  await Promise.all([loadConversationList(), loadSkillsList()]);
+
+  // Restore conversation from URL
+  const url = new URL(location.href);
+  const cid = url.searchParams.get('c');
+  if (cid && state.conversations.find(c => c.id === cid)) {
+    await openConversation(cid);
+  } else {
+    renderAllMessages();
+  }
+
+  ta.focus();
+});
+
+</script>
+</body>
+</html>
