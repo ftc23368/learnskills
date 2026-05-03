@@ -17,13 +17,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator
 
-from fastapi import FastAPI, HTTPException, Request, status
+import anthropic
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from . import agent, db
+from . import agent, db, files
 from .config import settings
 from .skills import load_skills
 
@@ -77,8 +78,6 @@ class CreateConversationResponse(BaseModel):
     updated_at: float
 
 
-class SendMessageRequest(BaseModel):
-    content: str
 
 
 # ------------------ Endpoints ------------------
@@ -133,8 +132,18 @@ def _shorten_title(text: str, limit: int = 60) -> str:
 
 
 @app.post("/api/conversations/{conversation_id}/messages")
-async def post_message(conversation_id: str, body: SendMessageRequest, request: Request):
+async def post_message(
+    conversation_id: str,
+    request: Request,
+    content: str = Form(""),
+    attachments: list[UploadFile] = File(default=[]),
+):
     """Stream a turn for `conversation_id`.
+
+    Accepts multipart/form-data with a `content` text field and zero-or-more
+    `attachments` files. Files are uploaded to the Anthropic Files API and
+    attached to the user message as `document` (PDFs) or `container_upload`
+    blocks (everything else).
 
     Persists the user message, then opens an SSE stream of typed agent events.
     On `turn_end`, persists the assistant message (with thinking + tool blocks).
@@ -143,6 +152,9 @@ async def post_message(conversation_id: str, body: SendMessageRequest, request: 
     conv = await db.get_conversation(conversation_id)
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if not content.strip() and not attachments:
+        raise HTTPException(status_code=400, detail="Message must contain text or at least one attachment.")
 
     lock = _lock_for(conversation_id)
     if lock.locked():
@@ -153,12 +165,27 @@ async def post_message(conversation_id: str, body: SendMessageRequest, request: 
 
     skills = request.app.state.skills
 
+    # Validate + read all attachments before any Anthropic call. Raises 400
+    # on unsupported types or oversize files.
+    file_tuples = await files.read_and_validate(attachments)
+
+    # Upload to the Files API and build the user content blocks.
+    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    try:
+        user_blocks = await files.build_user_content(client, content, file_tuples)
+    except anthropic.APIStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"File upload failed ({exc.status_code}): {exc.message}",
+        )
+
     # Persist user message before streaming so it survives disconnects.
-    await db.append_message(conversation_id, "user", body.content)
+    await db.append_message(conversation_id, "user", user_blocks)
 
     # First user message also seeds the conversation title.
     if conv["title"] == "New chat":
-        await db.update_title(conversation_id, _shorten_title(body.content))
+        title_seed = content.strip() or (file_tuples[0][0] if file_tuples else "Attachment")
+        await db.update_title(conversation_id, _shorten_title(title_seed))
 
     history = await db.get_messages_for_api(conversation_id)
 

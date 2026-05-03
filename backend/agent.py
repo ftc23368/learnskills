@@ -121,6 +121,20 @@ def build_tools(skills: dict[str, Skill]) -> list[dict[str, Any]]:
     return tools
 
 
+def _strip_local_fields(content: Any) -> Any:
+    """Remove keys beginning with `_` from message content blocks.
+
+    We use `_filename` / `_mime` on file blocks so the UI can render a chip
+    after a page refresh, but the Anthropic API rejects unknown keys. This
+    runs once on the messages list before each API call.
+    """
+    if isinstance(content, list):
+        return [_strip_local_fields(b) for b in content]
+    if isinstance(content, dict):
+        return {k: _strip_local_fields(v) for k, v in content.items() if not (isinstance(k, str) and k.startswith("_"))}
+    return content
+
+
 def apply_message_cache_control(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Add `cache_control` to the last block of the last message.
 
@@ -254,8 +268,10 @@ async def run_turn(
             }
             return
 
-        # Apply cache_control to the last prior message (turns 2+ benefit).
-        api_messages = apply_message_cache_control(messages)
+        # Apply cache_control to the last prior message (turns 2+ benefit),
+        # then strip any local-only fields (e.g., `_filename` on file blocks)
+        # before the API call — the API rejects unknown keys.
+        api_messages = _strip_local_fields(apply_message_cache_control(messages))
 
         try:
             async with client.messages.stream(
@@ -266,6 +282,7 @@ async def run_turn(
                 system=system,
                 tools=tools,
                 messages=api_messages,
+                extra_headers={"anthropic-beta": "files-api-2025-04-14"},
             ) as stream:
                 async for event in stream:
                     et = getattr(event, "type", None)

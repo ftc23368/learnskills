@@ -13,6 +13,7 @@ cp .env.example .env                    # then edit .env and add your ANTHROPIC_
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+bash scripts/link-document-skills.sh    # symlink Anthropic's pdf/docx/xlsx/pptx skills (optional, enables file attachments)
 uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -22,6 +23,7 @@ Try:
 - "Review this Python: `def divide(a, b): return a / b`" → triggers `read_skill("code-reviewer")`
 - "Compute the mean of [1,2,3,4,5,6,7,8,9,10] and the std dev" → triggers `read_skill("data-analyst")` + `code_execution`
 - "Design a landing page for a coffee shop" → triggers `read_skill("frontend-designer")`
+- Click the paperclip and attach a CSV / JSON / PDF / DOCX / XLSX / PPTX, then ask a question about it → uploaded via the Anthropic Files API and operated on by `code_execution` (or read natively for PDFs)
 
 Send a follow-up in the same conversation and watch the **cache-hit %** climb in the footer — that's the prompt cache in action.
 

@@ -10,3 +10,15 @@ venv/
 .vscode/
 *.egg-info/
 .pytest_cache/
+
+# Symlinked Anthropic document skills — recreated locally via
+# scripts/link-document-skills.sh; not committed because they would point at
+# absolute paths under the cloner's home directory.
+skills/pdf
+skills/docx
+skills/xlsx
+skills/pptx
+
+# Local debugging artifacts from Playwright sessions.
+.playwright-mcp/
+/*.png
