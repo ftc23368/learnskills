@@ -256,7 +256,6 @@ function renderConversationList() {
 }
 
 async function deleteConversationById(id, title) {
-  if (!confirm(`Delete "${title || 'this conversation'}"?`)) return;
   await api(`/api/conversations/${id}`, { method: 'DELETE' });
   if (state.currentId === id) {
     state.currentId = null;
