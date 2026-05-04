@@ -18,6 +18,7 @@ skills/pdf
 skills/docx
 skills/xlsx
 skills/pptx
+skills/skill-creator
 
 # Local debugging artifacts from Playwright sessions.
 .playwright-mcp/

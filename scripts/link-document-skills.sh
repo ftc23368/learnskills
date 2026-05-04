@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# Symlink Anthropic's official document-handling skills into skills/.
+# Symlink Anthropic's official skills into LearnSkills/skills/.
 #
-# These skills (pdf, docx, xlsx, pptx) ship with Claude Code as part of the
-# anthropic-agent-skills marketplace plugin. We symlink them rather than
-# copy so they track upstream updates automatically. The symlinks are
-# .gitignored because they reference absolute paths under the user's home.
+# Currently linked:
+#   - pdf, docx, xlsx, pptx — document handling (enables file attachments)
+#   - skill-creator         — guidance for authoring new skills
+#
+# These all ship with Claude Code via the anthropic-agent-skills marketplace
+# plugin. We symlink rather than copy so they track upstream updates
+# automatically. The symlinks are .gitignored because they reference absolute
+# paths under the user's home directory.
 #
 # Usage:  bash scripts/link-document-skills.sh
 # Idempotent: safe to re-run.
@@ -22,7 +26,7 @@ if [[ ! -d "$SOURCE_BASE" ]]; then
 fi
 
 linked=0
-for name in pdf docx xlsx pptx; do
+for name in pdf docx xlsx pptx skill-creator; do
   src="$SOURCE_BASE/$name"
   dst="$TARGET_BASE/$name"
   if [[ ! -d "$src" ]]; then
@@ -35,4 +39,4 @@ for name in pdf docx xlsx pptx; do
 done
 
 echo
-echo "Linked $linked document skill(s). Restart the server to pick them up."
+echo "Linked $linked skill(s). Reload via POST /api/skills/reload (or restart the server) to pick them up."
